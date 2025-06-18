@@ -14,7 +14,7 @@ _____
   * A (四則運算符) ( (B * 隨機百分比) + (B * 追加百分比) ) * 爆擊倍率
 
 
-
+![DamageSimulator_v1 0](https://github.com/user-attachments/assets/cd3f2334-c4e2-4cfa-a15e-76d8b2b993f9)
 
 
 
