@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DamageSimulator-V1.1.0</title>
+    <style>
+        /* CSS Reset and Global Settings */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #1e1e1e;
+            padding: 16px;
+        }
+
+        /* 主容器 */
+        .main-container {
+            display: flex;
+            flex-direction: row;
+            align-items: stretch; 
+            gap: 24px;
+            justify-content: center;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        /* 計算機主體 */
+        .calculator {
+            background: linear-gradient(145deg, #2f2f2f, #1a1a1a);
+            padding: 24px;
+            border-radius: 28px;
+            box-shadow: 10px 10px 30px rgba(0, 0, 0, 0.5),
+                        -10px -10px 30px rgba(255, 255, 255, 0.05);
+            width: 100%;
+            max-width: 380px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        /* 顯示區容器 */
+        .display-area {
+            background-color: #1c1c1c;
+            color: #f0f0f0;
+            padding: 10px 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            text-align: right;
+            min-height: 95px;
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.5),
+                        inset -5px -5px 10px rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        /* 上方計算過程顯示 */
+        .previous-expression {
+            font-size: 1.5rem;
+            color: #888;
+            height: 2rem;
+            white-space: nowrap;
+            overflow-x: auto;
+        }
+        .previous-expression::-webkit-scrollbar { display: none; }
+
+        /* 下方目前數字顯示 */
+        .current-input {
+            font-size: 3.5rem;
+            font-weight: 300;
+            white-space: nowrap;
+            overflow-x: auto;
+            line-height: 1.2;
+        }
+        .current-input::-webkit-scrollbar { display: none; }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .button {
+            background: linear-gradient(145deg, #3e3e3e, #2c2c2c);
+            color: #f0f0f0;
+            font-size: 1.8rem;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            aspect-ratio: 1 / 1;
+            user-select: none;
+            border: 1px solid rgba(0,0,0,0.2);
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(255, 255, 255, 0.05);
+            font-weight: 500;
+        }
+        .button:hover {
+            background: linear-gradient(145deg, #4a4a4a, #3a3a3a);
+            transform: translateY(-2px);
+        }
+        .button:active {
+            transform: translateY(1px);
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.5), inset -4px -4px 8px rgba(255, 255, 255, 0.05);
+        }
+        .button.operator {
+            background: linear-gradient(145deg, #0052D4, #003A96);
+            color: #E3F2FD;
+            font-size: 2.2rem;
+        }
+        .button.equals {
+            background: linear-gradient(145deg, #4CAF50, #388E3C);
+            color: #E8F5E9;
+            grid-column: span 2;
+            aspect-ratio: auto;
+        }
+        .button.clear {
+            background: linear-gradient(145deg, #D32F2F, #B71C1C);
+            color: #FFEBEE;
+        }
+
+        .advanced-panel {
+            background: #2a2a2e;
+            padding: 24px;
+            border-radius: 28px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 5px 5px 20px rgba(0, 0, 0, 0.4);
+            overflow: hidden; 
+        }
+
+        .history-log {
+            background-color: #1c1c1c;
+            border-radius: 16px;
+            padding: 16px;
+            flex-grow: 1; 
+            overflow-y: auto;
+            color: #ccc;
+            font-size: 1rem;
+            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            min-height: 150px;
+            max-height: 400px;
+        }
+        
+        .history-log::-webkit-scrollbar {
+            width: 8px;
+        }
+        .history-log::-webkit-scrollbar-track {
+            background: #2a2a2e;
+            border-radius: 10px;
+        }
+        .history-log::-webkit-scrollbar-thumb {
+            background-color: #616161;
+            border-radius: 10px;
+            border: 2px solid #2a2a2e;
+        }
+        .history-log::-webkit-scrollbar-thumb:hover {
+            background-color: #888;
+        }
+
+        .history-log-title {
+            color: #888;
+            text-align: center;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .history-entry {
+            margin-bottom: 4px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 4px;
+            word-wrap: break-word;
+        }
+        .history-entry:last-child { border-bottom: none; }
+        .modifier-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .modifier-group label {
+            color: #ccc;
+            font-size: 0.9rem;
+            margin-right: 4px;
+            user-select: none;
+        }
+        .modifier-group .end-label {
+             margin-left: -8px;
+        }
+
+        .toggle-button {
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            font-size: 0.9rem;
+            width: 120px; /* 加寬按鈕以容納圖示 */
+            text-align: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .toggle-button.random.on { background-color: #ff9800; box-shadow: 0 0 10px #ff980044; }
+        .toggle-button.additional.on { background-color: #03a9f4; box-shadow: 0 0 10px #03a9f444; }
+        .toggle-button.crit.on { background-color: #FFC107; color: #333; box-shadow: 0 0 10px #FFC10744; }
+        .toggle-button.off { background-color: #616161; box-shadow: none; }
+        .percent-input {
+            width: 70px;
+            padding: 12px;
+            background-color: #333;
+            border: 1px solid #555;
+            color: white;
+            border-radius: 12px;
+            font-size: 1rem;
+            text-align: center;
+        }
+        .percent-input:focus { outline: none; border-color: #03a9f4; }
+        .tilde { font-size: 1.5rem; color: #888; }
+        
+        /* 懸浮提示視窗樣式 */
+        .tooltip {
+            position: fixed;
+            display: none;
+            background-color: #222;
+            color: #f0f0f0;
+            text-align: center;
+            border-radius: 8px;
+            padding: 10px 15px;
+            z-index: 1001;
+            border: 1px solid #666;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.6);
+            font-size: 0.9rem;
+            pointer-events: none; /* 讓滑鼠可以穿透提示窗 */
+            transform: translateX(-50%); /* 水平置中 */
+            white-space: nowrap;
+        }
+        
+        @media (max-width: 880px) {
+            .main-container { flex-direction: column; align-items: center; }
+            .calculator, .advanced-panel { max-width: 480px; }
+            .history-log { height: 150px; flex-grow: 0; }
+        }
+    </style>
+</head>
+<body>
+    <a href="./index.html" style="position: absolute; top: 10px; left: 10px; z-index: 100; font-size: 1.2rem; color: #e0ca9d; background: rgb(1 1 1 / 50%); padding: 10px 15px; border-radius: 10px; text-decoration: none;">
+    3D Interface
+    </a>
+    <div class="main-container">
+        <div class="calculator">
+            <div class="display-area">
+                <div class="previous-expression" id="previous-expression"></div>
+                <div class="current-input" id="display">0</div>
+            </div>
+            <div class="buttons">
+                <div class="button clear">AC</div>
+                <div class="button" onclick="toggleSign()">+/-</div>
+                <div class="button" onclick="inputPercent()">%</div>
+                <div class="button operator" onclick="handleOperator('/')">÷</div>
+
+                <div class="button" onclick="appendInput('7')">7</div>
+                <div class="button" onclick="appendInput('8')">8</div>
+                <div class="button" onclick="appendInput('9')">9</div>
+                <div class="button operator" onclick="handleOperator('*')">×</div>
+
+                <div class="button" onclick="appendInput('4')">4</div>
+                <div class="button" onclick="appendInput('5')">5</div>
+                <div class="button" onclick="appendInput('6')">6</div>
+                <div class="button operator" onclick="handleOperator('-')">−</div>
+
+                <div class="button" onclick="appendInput('1')">1</div>
+                <div class="button" onclick="appendInput('2')">2</div>
+                <div class="button" onclick="appendInput('3')">3</div>
+                <div class="button operator" onclick="handleOperator('+')">+</div>
+
+                <div class="button" onclick="appendInput('0')">0</div>
+                <div class="button" onclick="appendInput('.')">.</div>
+                <div class="button equals" onclick="calculateResult()">=</div>
+            </div>
+        </div>
+        <div class="advanced-panel">
+            <div class="history-log">
+                <div class="history-log-title">數值紀錄</div>
+                <div id="history-content"></div>
+            </div>
+            <div class="modifier-group">
+                <button id="random-toggle" class="toggle-button random off" onclick="toggleModifier('random')">🎲隨機關閉</button>
+                <input type="number" id="random-min" class="percent-input" value="0">
+                <span class="tilde">~</span>
+                <input type="number" id="random-max" class="percent-input" value="200">
+                <label class="end-label">%隨機傷害</label>
+            </div>
+            <div class="modifier-group">
+                <button id="additional-toggle" class="toggle-button additional off" onclick="toggleModifier('additional')">🔥追加關閉</button>
+                <input type="number" id="additional-min" class="percent-input" value="30">
+                <span class="tilde">~</span>
+                <input type="number" id="additional-max" class="percent-input" value="45">
+                <label class="end-label">%追加傷害</label>
+            </div>
+            <div class="modifier-group">
+                <button id="crit-toggle" class="toggle-button crit off" onclick="toggleModifier('crit')">💥爆擊關閉</button>
+                <input type="number" id="crit-rate" class="percent-input" value="10" title="爆擊率 %">
+                <label for="crit-rate">%率</label>
+                <input type="number" id="crit-damage" class="percent-input" value="150" title="爆擊傷害 %">
+                <label for="crit-damage">%爆擊傷害</label>
+            </div>
+            <a
+                href="https://portaly.cc/tangledkai_2.0"
+                target="_blank" 
+                style="color:#8fb1bf; text-decoration: none; text-align: center;"
+                rel="noopener noreferrer" 
+                class="footer-link">
+                tangledkai_2.0 製作
+            </a>
+        </div>
+    </div>
+    
+    <!-- 懸浮提示視窗的 HTML 結構 -->
+    <div id="tooltip-random" class="tooltip">隨機傷害 = 基礎值 × (隨機%區間)</div>
+    <div id="tooltip-additional" class="tooltip">追加傷害 = 基礎值 × (追加%區間)</div>
+    <div id="tooltip-crit" class="tooltip">最終傷害 = 加成後數值 × 爆擊傷害%</div>
+
+
+    <script>
+        const display = document.getElementById('display');
+        const previousExpressionDisplay = document.getElementById('previous-expression');
+        const historyContent = document.getElementById('history-content');
+        
+        let currentInput = '0';
+        let operator = null;
+        let firstOperand = null;
+        let waitingForSecondOperand = false;
+        let lastOperation = { operator: null, operand: null };
+        let history = [];
+        let isRandomEnabled = false;
+        let isAdditionalEnabled = false;
+        let isCritEnabled = false;
+
+        // 更新：音效路徑
+        const soundMap = {
+            '0': 'assets/Numbers0.wav',
+            '1': 'assets/Numbers1.wav',
+            '2': 'assets/Numbers2.wav',
+            '3': 'assets/Numbers3.wav',
+            '4': 'assets/Numbers4.wav',
+            '5': 'assets/Numbers5.wav',
+            '6': 'assets/Numbers6.wav',
+            '7': 'assets/Numbers7.wav',
+            '8': 'assets/Numbers8.wav',
+            '9': 'assets/Numbers9.wav',
+            '.': 'assets/Point001.wav',
+            'AC': 'assets/Button001.mp3',
+            '=': 'assets/Settlement.wav',
+            '/': 'assets/Element001.wav',
+            '*': 'assets/Element001.wav',
+            '-': 'assets/Element001.wav',
+            '+': 'assets/Element001.wav',
+            '%': 'assets/Element001.wav',
+            '+/-': 'assets/Element001.wav',
+            'on': 'assets/ButtonOn.wav',
+            'off': 'assets/ButtonOff.wav',
+            'crit': 'assets/Critical.wav',
+            'longPressClear': 'assets/RecordClear.wav' // AC長按清除音效
+        };
+
+        function playSound(src) {
+            if (!src) return;
+            const sound = new Audio(src);
+            sound.play().catch(e => console.error("音效播放失敗:", e));
+        }
+        
+        function updateDisplay() {
+            display.textContent = currentInput;
+            if (operator && firstOperand !== null) {
+                const displayOperator = getDisplayOperator(operator);
+                previousExpressionDisplay.textContent = `${firstOperand} ${displayOperator}`;
+            } else {
+                previousExpressionDisplay.textContent = '';
+            }
+        }
+        updateDisplay();
+        
+        function getDisplayOperator(op) {
+            switch (op) {
+                case '*': return '×'; case '/': return '÷';
+                case '+': return '+'; case '-': return '−';
+                default: return '';
+            }
+        }
+
+        function appendInput(value) {
+            playSound(soundMap[value]);
+            if (currentInput === '錯誤') clearDisplay();
+            if (value === '.' && currentInput.includes('.')) return;
+
+            if (operator === null && firstOperand !== null && lastOperation.operator === null) {
+                currentInput = value;
+                firstOperand = null;
+            } else if (waitingForSecondOperand) {
+                currentInput = value;
+                waitingForSecondOperand = false;
+            } else {
+                currentInput = currentInput === '0' ? value : currentInput + value;
+            }
+            lastOperation.operator = null; 
+            updateDisplay();
+        }
+        
+        function handleOperator(nextOperator) {
+            playSound(soundMap[nextOperator]);
+            if (currentInput === '錯誤') return;
+
+            const inputValue = parseFloat(currentInput);
+            if (isNaN(inputValue)) return;
+
+            if (operator && waitingForSecondOperand) {
+                operator = nextOperator;
+                updateDisplay();
+                return;
+            }
+
+            if (firstOperand === null) {
+                firstOperand = inputValue;
+            } else if (operator) {
+                const result = performCalculation(firstOperand, operator, inputValue);
+                currentInput = String(result.finalResult);
+                firstOperand = result.finalResult;
+
+                if (currentInput === '錯誤') {
+                    operator = null;
+                    updateDisplay();
+                    previousExpressionDisplay.textContent = '';
+                    return;
+                }
+                addToHistory(result.log);
+            }
+
+            waitingForSecondOperand = true;
+            operator = nextOperator;
+            updateDisplay();
+        }
+        
+        function calculateResult() {
+            playSound(soundMap['=']);
+            if (currentInput === '錯誤') return;
+
+            let operand1, op, operand2;
+
+            if (operator !== null && !waitingForSecondOperand) {
+                operand1 = firstOperand;
+                op = operator;
+                operand2 = parseFloat(currentInput);
+                if (isNaN(operand1) || isNaN(operand2)) { clearDisplay(); return; }
+                lastOperation = { operator: op, operand: operand2 };
+            } else if (operator === null && lastOperation.operator !== null) {
+                operand1 = parseFloat(currentInput);
+                op = lastOperation.operator;
+                operand2 = lastOperation.operand;
+                if (isNaN(operand1) || isNaN(operand2)) { clearDisplay(); return; }
+            } else { return; }
+
+            const result = performCalculation(operand1, op, operand2);
+            currentInput = String(result.finalResult);
+            firstOperand = result.finalResult; 
+            
+            addToHistory(result.log);
+            
+            operator = null;
+            waitingForSecondOperand = false;
+            updateDisplay();
+        }
+
+        function performCalculation(operand1, op, operand2) {
+            let baseB = operand2;
+            let randomPart = 0;
+            let additionalPart = 0;
+            let log = `${Math.round(operand1)} ${getDisplayOperator(op)} `;
+
+            if (isRandomEnabled) {
+                const min = parseFloat(document.getElementById('random-min').value) / 100;
+                const max = parseFloat(document.getElementById('random-max').value) / 100;
+                const randomPercent = Math.random() * (max - min) + min;
+                randomPart = baseB * randomPercent;
+            }
+
+            if (isAdditionalEnabled) {
+                const min = parseFloat(document.getElementById('additional-min').value) / 100;
+                const max = parseFloat(document.getElementById('additional-max').value) / 100;
+                const additionalPercent = Math.random() * (max - min) + min;
+                additionalPart = baseB * additionalPercent;
+            }
+            
+            let finalOperandB = baseB;
+            let operand2Log = "";
+
+            if (isRandomEnabled || isAdditionalEnabled) {
+                finalOperandB = randomPart + additionalPart;
+                operand2Log += `${baseB.toFixed(1)}`;
+                if (isRandomEnabled) operand2Log += ` (🎲:${randomPart.toFixed(1)})`;
+                if (isAdditionalEnabled) operand2Log += ` (🔥:${additionalPart.toFixed(1)})`;
+            } else {
+                operand2Log += `${baseB.toFixed(1)}`;
+            }
+            
+            let isCriticalHit = false;
+            if (isCritEnabled) {
+                const critRate = parseFloat(document.getElementById('crit-rate').value);
+                if (Math.random() * 100 < critRate) {
+                    isCriticalHit = true;
+                    const critMultiplier = parseFloat(document.getElementById('crit-damage').value) / 100;
+                    finalOperandB *= critMultiplier;
+                    playSound(soundMap['crit']);
+                }
+            }
+            
+            if (isCriticalHit) {
+                operand2Log += ` (💥:${finalOperandB.toFixed(1)})`;
+            }
+            
+            log += operand2Log;
+
+            let resultValue;
+            switch (op) {
+                case '+': resultValue = operand1 + finalOperandB; break;
+                case '-': resultValue = operand1 - finalOperandB; break;
+                case '*': resultValue = operand1 * finalOperandB; break;
+                case '/': 
+                    if (finalOperandB === 0) return { finalResult: '錯誤', log: `${operand1.toFixed(1)} / 0 = 錯誤` };
+                    resultValue = operand1 / finalOperandB; 
+                    break;
+                default: return { finalResult: operand1, log: "無效運算" };
+            }
+            
+            if (!isFinite(resultValue)) return { finalResult: '錯誤', log: `結果無效` };
+            
+            const finalResult = parseFloat(resultValue.toFixed(4));
+            log += ` = ${Math.round(finalResult)}`;
+            
+            return { finalResult, log };
+        }
+
+        function clearDisplay() {
+            playSound(soundMap['AC']);
+            currentInput = '0';
+            operator = null;
+            firstOperand = null;
+            waitingForSecondOperand = false;
+            lastOperation = { operator: null, operand: null };
+            updateDisplay();
+        }
+
+        function toggleSign() {
+            playSound(soundMap['+/-']);
+            if (currentInput === '0' || currentInput === '錯誤') return;
+            currentInput = (parseFloat(currentInput) * -1).toString();
+            updateDisplay();
+        }
+
+        function inputPercent() {
+            playSound(soundMap['%']);
+            if (currentInput === '錯誤') return;
+            currentInput = (parseFloat(currentInput) / 100).toString();
+            updateDisplay();
+        }
+        
+        function toggleModifier(type) {
+            const toggleButton = document.getElementById(`${type}-toggle`);
+            let isCurrentlyOn;
+            
+            if (type === 'random') isCurrentlyOn = isRandomEnabled;
+            else if (type === 'additional') isCurrentlyOn = isAdditionalEnabled;
+            else if (type === 'crit') isCurrentlyOn = isCritEnabled;
+
+            const newStatus = !isCurrentlyOn;
+            playSound(newStatus ? soundMap['on'] : soundMap['off']);
+
+            if (type === 'random') {
+                isRandomEnabled = newStatus;
+                toggleButton.textContent = newStatus ? '🎲隨機開啟' : '🎲隨機關閉';
+            } else if (type === 'additional') {
+                isAdditionalEnabled = newStatus;
+                toggleButton.textContent = newStatus ? '🔥追加開啟' : '🔥追加關閉';
+            } else if (type === 'crit') {
+                isCritEnabled = newStatus;
+                toggleButton.textContent = newStatus ? '💥爆擊開啟' : '💥爆擊關閉';
+            }
+            
+            toggleButton.classList.toggle('on', newStatus);
+            toggleButton.classList.toggle('off', !newStatus);
+        }
+
+        function addToHistory(log) {
+            history.unshift(log);
+            if (history.length > 50) history.pop(); 
+            renderHistory();
+        }
+
+        function renderHistory() {
+            historyContent.innerHTML = history.map(entry => `<div class="history-entry">${entry}</div>`).join('');
+        }
+
+        const acButton = document.querySelector('.button.clear');
+        let acPressTimer = null;
+        let longPressTriggered = false;
+
+        function startPress(e) {
+            e.preventDefault();
+            longPressTriggered = false;
+            acPressTimer = setTimeout(() => {
+                longPressTriggered = true;
+                history = [];
+                renderHistory();
+                // 更新：播放指定的長按清除音效
+                playSound(soundMap['longPressClear']);
+            }, 1000);
+        }
+
+        function endPress(e) {
+            e.preventDefault();
+            clearTimeout(acPressTimer);
+            if (!longPressTriggered) {
+                clearDisplay();
+            }
+        }
+
+        function cancelPress(e) {
+            e.preventDefault();
+            clearTimeout(acPressTimer);
+        }
+
+        acButton.addEventListener('mousedown', startPress);
+        acButton.addEventListener('touchstart', startPress, { passive: false });
+        acButton.addEventListener('mouseup', endPress);
+        acButton.addEventListener('touchend', endPress);
+        acButton.addEventListener('mouseleave', cancelPress);
+        
+        // 懸浮提示視窗邏輯
+        const tooltipsConfig = {
+            'random-toggle': document.getElementById('tooltip-random'),
+            'additional-toggle': document.getElementById('tooltip-additional'),
+            'crit-toggle': document.getElementById('tooltip-crit')
+        };
+        
+        let tooltipTimer = null;
+
+        Object.keys(tooltipsConfig).forEach(buttonId => {
+            const button = document.getElementById(buttonId);
+            const tooltip = tooltipsConfig[buttonId];
+
+            button.addEventListener('mouseenter', (e) => {
+                clearTimeout(tooltipTimer);
+                tooltipTimer = setTimeout(() => {
+                    Object.values(tooltipsConfig).forEach(tip => tip.style.display = 'none');
+                    
+                    const tooltipRect = tooltip.getBoundingClientRect();
+                    tooltip.style.left = `${e.clientX}px`;
+                    tooltip.style.top = `${e.clientY - tooltipRect.height - 25}px`;
+                    tooltip.style.display = 'block';
+                }, 1000);
+            });
+
+            button.addEventListener('mouseleave', () => {
+                clearTimeout(tooltipTimer);
+                tooltip.style.display = 'none';
+            });
+        });
+
+    </script>
+</body>
+</html>
