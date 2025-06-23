@@ -1,20 +1,17 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
+<!-- saved from url=(0269)file:///E:/_KaiDesign/KAI_Design_2025/AI%E7%94%9F%E6%88%90/_AI%E9%81%8A%E6%88%B2%E5%8E%9F%E5%9E%8B%E6%A8%A1%E6%93%AC/%E8%A8%88%E7%AE%97%E6%A9%9F%E5%B7%A5%E5%85%B7_%E5%82%B7%E5%AE%B3%E8%A8%88%E7%AE%97%E5%99%A8/H5%E5%82%B7%E5%AE%B3%E8%A8%88%E7%AE%97%E5%99%A8/index02.html -->
+<html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DamageSimulator_v1.0</title>
+    <title>進階戰鬥計算機 (V12 - 全新介面)</title>
     <style>
-        /* CSS Reset and Global Settings */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        /* 全局設置 */
         html, body {
             height: 100%;
             width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* 防止滾動 */
         }
 
         body {
@@ -22,64 +19,76 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #1e1e1e;
-            padding: 16px;
+            background-color: #1a1a1a;
         }
 
         /* 主容器 */
-        .main-container {
+        .container {
+            position: relative;
+            width: 1920px; 
+            height: 1080px;
+            background-image: url('assets/Bg.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transform: scale(1);
+        }
+        
+        /* === 左側計算機面板容器 === */
+        .calculator-panel {
+            position: absolute;
+            top: 200px;
+            left: 520px;
+            width: 380px;
+            height: 680px; /* 根據背景圖估算的高度 */
             display: flex;
-            flex-direction: row;
-            align-items: stretch; 
-            gap: 24px;
-            justify-content: center;
-            max-width: 900px;
-            width: 100%;
+            flex-direction: column;
+            gap: 5px; /* 顯示區和按鈕區的間距 */
+        }
+        
+        /* === 右側進階面板容器 === */
+        .advanced-panel {
+            position: absolute;
+            top: 200px;
+            left: 980px;
+            width: 400px;
+            height: 570px; /* 根據背景圖估算的高度 */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
-        /* 計算機主體 */
-        .calculator {
-            background: linear-gradient(145deg, #2f2f2f, #1a1a1a);
-            padding: 24px;
-            border-radius: 28px;
-            box-shadow: 10px 10px 30px rgba(0, 0, 0, 0.5),
-                        -10px -10px 30px rgba(255, 255, 255, 0.05);
-            width: 100%;
-            max-width: 380px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            flex-shrink: 0;
+        /* === 通用元件樣式 (移除背景和邊框) === */
+        .display-area, .button, .history-log, .toggle-button, .percent-input {
+            background: transparent;
+            border: none;
+            box-shadow: none;
         }
 
-        /* 顯示區容器 */
+        /* === 左側計算機區域 === */
         .display-area {
-            background-color: #1c1c1c;
+            width: 100%;
+            height: 200px;
             color: #f0f0f0;
             padding: 10px 20px;
-            border-radius: 16px;
-            margin-bottom: 24px;
             text-align: right;
-            min-height: 95px;
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.5),
-                        inset -5px -5px 10px rgba(255, 255, 255, 0.05);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             overflow: hidden;
         }
 
-        /* 上方計算過程顯示 */
         .previous-expression {
-            font-size: 1.5rem;
-            color: #888;
-            height: 2rem;
+            font-size: 1.8rem;
+            color: #aaa;
+            height: 2.2rem;
             white-space: nowrap;
             overflow-x: auto;
         }
         .previous-expression::-webkit-scrollbar { display: none; }
 
-        /* 下方目前數字顯示 */
         .current-input {
-            font-size: 3.5rem;
+            font-size: 3.8rem;
             font-weight: 300;
             white-space: nowrap;
             overflow-x: auto;
@@ -87,153 +96,108 @@
         }
         .current-input::-webkit-scrollbar { display: none; }
 
-        .buttons {
+        .buttons-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
+            gap: 22px 24px; /* 垂直和水平間距 */
+            padding: 0 10px; /* 微調以對齊 */
         }
 
         .button {
-            background: linear-gradient(145deg, #3e3e3e, #2c2c2c);
             color: #f0f0f0;
-            font-size: 1.8rem;
-            border-radius: 16px;
+            font-size: 2rem;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.1s ease;
             display: flex;
             justify-content: center;
             align-items: center;
-            aspect-ratio: 1 / 1;
-            user-select: none;
-            border: 1px solid rgba(0,0,0,0.2);
-            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(255, 255, 255, 0.05);
-            font-weight: 500;
-        }
-        .button:hover {
-            background: linear-gradient(145deg, #4a4a4a, #3a3a3a);
-            transform: translateY(-2px);
+            height: 85px; /* 固定按鈕高度 */
         }
         .button:active {
-            transform: translateY(1px);
-            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.5), inset -4px -4px 8px rgba(255, 255, 255, 0.05);
-        }
-        .button.operator {
-            background: linear-gradient(145deg, #0052D4, #003A96);
-            color: #E3F2FD;
-            font-size: 2.2rem;
-        }
-        .button.equals {
-            background: linear-gradient(145deg, #4CAF50, #388E3C);
-            color: #E8F5E9;
-            grid-column: span 2;
-            aspect-ratio: auto;
-        }
-        .button.clear {
-            background: linear-gradient(145deg, #D32F2F, #B71C1C);
-            color: #FFEBEE;
-        }
-
-        .advanced-panel {
-            background: #2a2a2e;
-            padding: 24px;
-            border-radius: 28px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 5px 5px 20px rgba(0, 0, 0, 0.4);
-            overflow: hidden; 
-        }
-
-        .history-log {
-            background-color: #1c1c1c;
-            border-radius: 16px;
-            padding: 16px;
-            flex-grow: 1; 
-            overflow-y: auto;
-            color: #ccc;
-            font-size: 1rem;
-            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            min-height: 150px;
-            max-height: 400px;
+            transform: translateY(2px);
+            opacity: 0.8;
         }
         
-        .history-log::-webkit-scrollbar {
-            width: 8px;
-        }
-        .history-log::-webkit-scrollbar-track {
-            background: #2a2a2e;
-            border-radius: 10px;
-        }
-        .history-log::-webkit-scrollbar-thumb {
-            background-color: #616161;
-            border-radius: 10px;
-            border: 2px solid #2a2a2e;
-        }
-        .history-log::-webkit-scrollbar-thumb:hover {
-            background-color: #888;
-        }
+        .button.clear { font-size: 2.2rem; color: #ff6b6b; }
+        .button.operator { font-size: 2.5rem; color: #5c9ce6; }
+        .button.equals { grid-column: span 2; font-size: 2.5rem; color: #63e6be; }
 
+
+        /* === 右側進階面板 === */
+        .history-log {
+            height: 385px;
+            padding: 20px;
+            overflow-y: auto;
+            color: #ccc;
+        }
         .history-log-title {
             color: #888;
             text-align: center;
             margin-bottom: 8px;
             font-weight: bold;
+            font-size: 1.2rem;
         }
         .history-entry {
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             border-bottom: 1px solid #333;
-            padding-bottom: 4px;
+            padding-bottom: 6px;
             word-wrap: break-word;
+            font-size: 1.1rem;
         }
         .history-entry:last-child { border-bottom: none; }
+        .history-log::-webkit-scrollbar { width: 8px; }
+        .history-log::-webkit-scrollbar-track { background: #2a2a2e; border-radius: 10px; }
+        .history-log::-webkit-scrollbar-thumb { background-color: #616161; border-radius: 10px; border: 2px solid #2a2a2e; }
+        
         .modifier-group {
             display: flex;
             align-items: center;
-            gap: 12px;
+            padding: 0 5px;
+            height: 50px;
+            gap: 10px;
         }
         
-        .modifier-group label {
-            color: #ccc;
-            font-size: 0.9rem;
-            margin-right: 4px;
-            user-select: none;
-        }
-        .modifier-group .end-label {
-             margin-left: -8px;
-        }
-
         .toggle-button {
-            padding: 12px;
-            border-radius: 12px;
-            border: none;
             color: white;
             cursor: pointer;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            font-size: 0.9rem;
-            width: 120px; /* 加寬按鈕以容納圖示 */
-            text-align: center;
+            font-size: 1.1rem;
             font-weight: bold;
-            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            width: 140px;
+            height: 100%;
         }
-        .toggle-button.random.on { background-color: #ff9800; box-shadow: 0 0 10px #ff980044; }
-        .toggle-button.additional.on { background-color: #03a9f4; box-shadow: 0 0 10px #03a9f444; }
-        .toggle-button.crit.on { background-color: #FFC107; color: #333; box-shadow: 0 0 10px #FFC10744; }
-        .toggle-button.off { background-color: #616161; box-shadow: none; }
+        .toggle-button:active {
+            transform: translateY(1px);
+        }
+
         .percent-input {
-            width: 70px;
-            padding: 12px;
-            background-color: #333;
-            border: 1px solid #555;
             color: white;
-            border-radius: 12px;
-            font-size: 1rem;
             text-align: center;
+            font-size: 1.1rem;
+            width: 65px;
+            height: 100%;
         }
-        .percent-input:focus { outline: none; border-color: #03a9f4; }
-        .tilde { font-size: 1.5rem; color: #888; }
+        .percent-input:focus { outline: none; }
+        
+        .tilde { font-size: 1.8rem; color: #888; }
+        
+        .modifier-group label { color: #ccc; font-size: 1rem; }
+        
+        /* 製作者連結 */
+        .footer-link {
+            position: absolute;
+            bottom: 100px; /* 定位到底部 */
+            left: 1080px;
+            width: 450px;
+            text-align: center;
+            color: #8fb1bf;
+            text-decoration: none;
+            font-size: 1rem;
+        }
         
         /* 懸浮提示視窗樣式 */
         .tooltip {
@@ -248,96 +212,156 @@
             border: 1px solid #666;
             box-shadow: 0 5px 20px rgba(0,0,0,0.6);
             font-size: 0.9rem;
-            pointer-events: none; /* 讓滑鼠可以穿透提示窗 */
-            transform: translateX(-50%); /* 水平置中 */
+            pointer-events: none;
+            transform: translateX(-50%);
             white-space: nowrap;
         }
-        
-        @media (max-width: 880px) {
-            .main-container { flex-direction: column; align-items: center; }
-            .calculator, .advanced-panel { max-width: 480px; }
-            .history-log { height: 150px; flex-grow: 0; }
-        }
+
     </style>
 </head>
 <body>
-    <a href="./indexart.html" style="position: absolute; top: 80px; left: 130px; z-index: 100; font-size: 1.2rem; color: #fff; background: rgba(0,0,0,0.5); padding: 10px 15px; border-radius: 10px; text-decoration: none;">
-    3D介面
+    <a href="./index.html" style="position: absolute; top: 80px; left: 130px; z-index: 100; font-size: 1.2rem; color: #fff; background: rgba(0,0,0,0.5); padding: 10px 15px; border-radius: 10px; text-decoration: none;">
+    平面介面
     </a>
-    <div class="main-container">
-        <div class="calculator">
+    <div class="container">
+        <!-- 左側計算機面板 -->
+        <div class="calculator-panel">
             <div class="display-area">
-                <div class="previous-expression" id="previous-expression"></div>
-                <div class="current-input" id="display">0</div>
+                <div class="previous-expression" id="previous-expression" style="
+    padding-top: 10px;
+    padding-right: 40px;
+"></div>
+                <div class="current-input" id="display" style="
+    padding-right: 40px;
+    padding-bottom: 20px;
+    padding-top: 0px;
+    padding-left: 40px;
+">0</div>
             </div>
-            <div class="buttons">
+            <div class="buttons-grid" style="
+    height: 470px;
+    padding-left: 30px;
+    width: 340px;
+    padding-right: 30px;
+    padding-top: 0px;
+    padding-bottom: 40px;
+    border-top-width: 50px;
+">
                 <div class="button clear">AC</div>
                 <div class="button" onclick="toggleSign()">+/-</div>
                 <div class="button" onclick="inputPercent()">%</div>
-                <div class="button operator" onclick="handleOperator('/')">÷</div>
-
-                <div class="button" onclick="appendInput('7')">7</div>
-                <div class="button" onclick="appendInput('8')">8</div>
-                <div class="button" onclick="appendInput('9')">9</div>
-                <div class="button operator" onclick="handleOperator('*')">×</div>
-
-                <div class="button" onclick="appendInput('4')">4</div>
-                <div class="button" onclick="appendInput('5')">5</div>
-                <div class="button" onclick="appendInput('6')">6</div>
-                <div class="button operator" onclick="handleOperator('-')">−</div>
-
-                <div class="button" onclick="appendInput('1')">1</div>
-                <div class="button" onclick="appendInput('2')">2</div>
-                <div class="button" onclick="appendInput('3')">3</div>
-                <div class="button operator" onclick="handleOperator('+')">+</div>
-
-                <div class="button" onclick="appendInput('0')">0</div>
-                <div class="button" onclick="appendInput('.')">.</div>
+                <div class="button operator" onclick="handleOperator(&#39;/&#39;)">÷</div>
+                <div class="button" onclick="appendInput(&#39;7&#39;)">7</div>
+                <div class="button" onclick="appendInput(&#39;8&#39;)">8</div>
+                <div class="button" onclick="appendInput(&#39;9&#39;)">9</div>
+                <div class="button operator" onclick="handleOperator(&#39;*&#39;)">×</div>
+                <div class="button" onclick="appendInput(&#39;4&#39;)">4</div>
+                <div class="button" onclick="appendInput(&#39;5&#39;)">5</div>
+                <div class="button" onclick="appendInput(&#39;6&#39;)">6</div>
+                <div class="button operator" onclick="handleOperator(&#39;-&#39;)">−</div>
+                <div class="button" onclick="appendInput(&#39;1&#39;)">1</div>
+                <div class="button" onclick="appendInput(&#39;2&#39;)">2</div>
+                <div class="button" onclick="appendInput(&#39;3&#39;)">3</div>
+                <div class="button operator" onclick="handleOperator(&#39;+&#39;)">+</div>
+                <div class="button" onclick="appendInput(&#39;0&#39;)">0</div>
+                <div class="button" onclick="appendInput(&#39;.&#39;)">.</div>
                 <div class="button equals" onclick="calculateResult()">=</div>
             </div>
         </div>
+
+        <!-- 右側進階面板 -->
         <div class="advanced-panel">
-            <div class="history-log">
-                <div class="history-log-title">數值紀錄</div>
-                <div id="history-content"></div>
+            <div class="history-log" style="
+    padding-bottom: 40px;
+">
+                <div class="history-log-title" style="
+    padding-top: 10px;
+">數值紀錄</div>
+                <div id="history-content"><div class="history-entry">
+                </div></div>
             </div>
-            <div class="modifier-group">
-                <button id="random-toggle" class="toggle-button random off" onclick="toggleModifier('random')">🎲隨機關閉</button>
-                <input type="number" id="random-min" class="percent-input" value="0">
-                <span class="tilde">~</span>
+            <div class="modifier-group" style="
+    padding-top: 30px;
+    padding-bottom: 5px;
+    height: 50px;
+    width: 420px;
+    padding-left: 0px;
+">
+                <div class="toggle-button random off" id="random-toggle" onclick="toggleModifier(&#39;random&#39;)" style="
+    padding-left: 0px;
+    padding-top: 0px;
+    width: 140px;
+    padding-right: 0px;
+    padding-bottom: 0px;
+">🎲隨機關閉</div>
+                <input type="number" id="random-min" class="percent-input" value="0" style="
+    padding-right: 0px;
+    padding-left: 10px;
+">
+                <span class="tilde" style="
+    padding-right: 5px;
+    width: 30px;
+    height: 30px;
+">~</span>
                 <input type="number" id="random-max" class="percent-input" value="200">
-                <label class="end-label">%隨機傷害</label>
+                <label style="
+    padding-left: 0px;
+    width: 90px;
+    height: 20px;
+">%隨機傷害</label>
             </div>
-            <div class="modifier-group">
-                <button id="additional-toggle" class="toggle-button additional off" onclick="toggleModifier('additional')">🔥追加關閉</button>
-                <input type="number" id="additional-min" class="percent-input" value="30">
-                <span class="tilde">~</span>
+            <div class="modifier-group" style="
+    padding-top: 0px;
+    padding-bottom: 0px;
+    width: 420px;
+    padding-left: 0px;
+">
+                <div class="toggle-button additional off" id="additional-toggle" onclick="toggleModifier(&#39;additional&#39;)">🔥追加關閉</div>
+                <input type="number" id="additional-min" class="percent-input" value="30" style="
+    padding-left: 10px;
+    padding-right: 0px;
+">
+                <span class="tilde" style="width: 30px;height: 30px;">~</span>
                 <input type="number" id="additional-max" class="percent-input" value="45">
-                <label class="end-label">%追加傷害</label>
+                <label style="
+    width: 90px;
+    height: 20px;
+">%追加傷害</label>
             </div>
-            <div class="modifier-group">
-                <button id="crit-toggle" class="toggle-button crit off" onclick="toggleModifier('crit')">💥爆擊關閉</button>
-                <input type="number" id="crit-rate" class="percent-input" value="10" title="爆擊率 %">
-                <label for="crit-rate">%率</label>
-                <input type="number" id="crit-damage" class="percent-input" value="150" title="爆擊傷害 %">
-                <label for="crit-damage">%爆擊傷害</label>
-            </div>
-            <a
-                href="https://portaly.cc/tangledkai_2.0"
-                target="_blank" 
-                style="color:#8fb1bf; text-decoration: none; text-align: center;"
-                rel="noopener noreferrer" 
-                class="footer-link">
-                tangledkai_2.0 製作
-            </a>
+            <div class="modifier-group" style="
+    padding-bottom: 20px;
+    padding-top: 0px;
+    padding-left: 0px;
+    width: 420px;
+">
+                <div class="toggle-button crit off" id="crit-toggle" onclick="toggleModifier(&#39;crit&#39;)">💥爆擊開啟</div>
+                
+                <input type="number" id="crit-rate" class="percent-input" value="10" title="爆擊率 %" style="
+    padding-left: 10px;
+    padding-right: 0px;
+">
+                
+                <label for="crit-rate" style="
+    width: 30px;
+    height: 30px;
+">%率</label><input type="number" id="crit-damage" class="percent-input" value="150" title="爆擊傷害 %">
+            <label for="crit-damage" style="
+    width: 90px;
+    height: 20px;
+">%爆擊傷害</label></div>
         </div>
+
+        <!-- 製作連結 -->
+        <a href="https://portaly.cc/tangledkai_2.0" target="_blank" rel="noopener noreferrer" class="footer-link">
+            tangledkai_2.0 製作
+        </a>
     </div>
     
-    <!-- 懸浮提示視窗的 HTML 結構 -->
-    <div id="tooltip-random" class="tooltip">隨機傷害 = 基礎值 × (隨機%區間)</div>
-    <div id="tooltip-additional" class="tooltip">追加傷害 = 基礎值 × (追加%區間)</div>
-    <div id="tooltip-crit" class="tooltip">最終傷害 = 加成後數值 × 爆擊傷害%</div>
-
+    <!-- 懸浮提示視窗 -->
+    <div id="tooltip-random" class="tooltip" style="display: none; left: 1205px; top: 646px;">隨機傷害 = 基礎值 × (隨機%區間)</div>
+    <div id="tooltip-additional" class="tooltip" style="display: none; left: 1214px; top: 671px;">追加傷害 = 基礎值 × (追加%區間)</div>
+    <div id="tooltip-crit" class="tooltip" style="display: none; left: 1176px; top: 798px;">最終傷害 = 加成後數值 × 爆擊傷害%</div>
+ 
 
     <script>
         const display = document.getElementById('display');
@@ -354,31 +378,15 @@
         let isAdditionalEnabled = false;
         let isCritEnabled = false;
 
-        // 更新：音效路徑
         const soundMap = {
-            '0': 'assets/Numbers0.wav',
-            '1': 'assets/Numbers1.wav',
-            '2': 'assets/Numbers2.wav',
-            '3': 'assets/Numbers3.wav',
-            '4': 'assets/Numbers4.wav',
-            '5': 'assets/Numbers5.wav',
-            '6': 'assets/Numbers6.wav',
-            '7': 'assets/Numbers7.wav',
-            '8': 'assets/Numbers8.wav',
-            '9': 'assets/Numbers9.wav',
-            '.': 'assets/Point001.wav',
-            'AC': 'assets/Button001.mp3',
-            '=': 'assets/Settlement.wav',
-            '/': 'assets/Element001.wav',
-            '*': 'assets/Element001.wav',
-            '-': 'assets/Element001.wav',
-            '+': 'assets/Element001.wav',
-            '%': 'assets/Element001.wav',
-            '+/-': 'assets/Element001.wav',
-            'on': 'assets/ButtonOn.wav',
-            'off': 'assets/ButtonOff.wav',
-            'crit': 'assets/Critical.wav',
-            'longPressClear': 'assets/RecordClear.wav' // AC長按清除音效
+            '0': 'assets/Numbers0.wav', '1': 'assets/Numbers1.wav', '2': 'assets/Numbers2.wav',
+            '3': 'assets/Numbers3.wav', '4': 'assets/Numbers4.wav', '5': 'assets/Numbers5.wav',
+            '6': 'assets/Numbers6.wav', '7': 'assets/Numbers7.wav', '8': 'assets/Numbers8.wav',
+            '9': 'assets/Numbers9.wav', '.': 'assets/Point001.wav', 'AC': 'assets/Button001.mp3',
+            '=': 'assets/Settlement.wav', '/': 'assets/Element001.wav', '*': 'assets/Element001.wav',
+            '-': 'assets/Element001.wav', '+': 'assets/Element001.wav', '%': 'assets/Element001.wav',
+            '+/-': 'assets/Element001.wav', 'on': 'assets/ButtonOn.wav', 'off': 'assets/ButtonOff.wav',
+            'crit': 'assets/Critical.wav', 'longPressClear': 'assets/RecordClear.wav'
         };
 
         function playSound(src) {
@@ -532,7 +540,7 @@
             }
             
             if (isCriticalHit) {
-                operand2Log += ` (💥:${finalOperandB.toFixed(1)})`;
+                operand2Log += ` (💥爆擊:${finalOperandB.toFixed(1)})`;
             }
             
             log += operand2Log;
@@ -602,9 +610,6 @@
                 isCritEnabled = newStatus;
                 toggleButton.textContent = newStatus ? '💥爆擊開啟' : '💥爆擊關閉';
             }
-            
-            toggleButton.classList.toggle('on', newStatus);
-            toggleButton.classList.toggle('off', !newStatus);
         }
 
         function addToHistory(log) {
@@ -628,7 +633,6 @@
                 longPressTriggered = true;
                 history = [];
                 renderHistory();
-                // 更新：播放指定的長按清除音效
                 playSound(soundMap['longPressClear']);
             }, 1000);
         }
@@ -652,11 +656,10 @@
         acButton.addEventListener('touchend', endPress);
         acButton.addEventListener('mouseleave', cancelPress);
         
-        // 懸浮提示視窗邏輯
         const tooltipsConfig = {
             'random-toggle': document.getElementById('tooltip-random'),
             'additional-toggle': document.getElementById('tooltip-additional'),
-            'crit-toggle': document.getElementById('tooltip-crit')
+            'crit-toggle': document.getElementById('tooltip-crit-toggle')
         };
         
         let tooltipTimer = null;
@@ -684,5 +687,6 @@
         });
 
     </script>
-</body>
-</html>
+
+
+</body></html>
