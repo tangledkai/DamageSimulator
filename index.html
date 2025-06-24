@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DamageSimulator-V1.1.0</title>
+    <title>DamageSimulator-V1.3.0 (AC提示版)</title>
     <style>
         /* 全局設置 */
         html, body {
@@ -50,12 +50,12 @@
             flex-shrink: 0; 
         }
         
-        /* === 左側計算機面板容器 (整合你的手動微調) === */
+        /* === 左側計算機面板容器 === */
         .calculator-panel {
             position: absolute;
             top: 150px;
-            left: 85px;  /* 你的微調 */
-            width: 350px; /* 你的微調 */
+            left: 85px;
+            width: 350px;
             height: 680px;
             display: flex;
             flex-direction: column;
@@ -81,13 +81,13 @@
             box-shadow: none;
         }
 
-        /* === 左側計算機區域 (整合你的手動微調) === */
+        /* === 左側計算機區域 === */
         .display-area {
             width: 100%;
             height: 200px;
             color: #f0f0f0;
             padding: 10px 20px;
-            padding-bottom: 40px; /* 你的微調 */
+            padding-bottom: 40px;
             text-align: right;
             display: flex;
             flex-direction: column;
@@ -143,7 +143,7 @@
         .button.clear { 
             font-size: 2.2rem; 
             color: #ff6b6b; 
-            padding-right: 10px; /* 你的微調 */
+            padding-right: 10px;
         }
         .button.operator { font-size: 2.5rem; color: #5c9ce6; }
         .button.equals { grid-column: span 2; font-size: 2.5rem; color: #63e6be; }
@@ -178,7 +178,7 @@
         .modifier-group {
             display: flex;
             align-items: center;
-            padding: 0px; /* 你的微調 */
+            padding: 0px;
             height: 50px;
             gap: 10px;
         }
@@ -208,18 +208,20 @@
         }
         .percent-input:focus { outline: none; }
         
-        .tilde { font-size: 1.8rem; color: #888; }
+        .dice-separator { 
+            font-size: 1.5rem; 
+            color: #888;
+            font-weight: bold;
+        }
         
-        /* === 標籤樣式 (解決換行問題的核心) === */
         .modifier-group label {
             color: #ccc;
             font-size: 1rem;
-            white-space: nowrap; /* 關鍵：防止文字換行 */
-            text-align: right;   /* 讓三個標籤的文字靠右對齊，看起來更整齊 */
-            flex-grow: 1;        /* 讓標籤填滿剩餘的彈性空間 */
+            white-space: nowrap;
+            text-align: right;  
+            flex-grow: 1;
         }
         
-        /* 製作者連結 */
         .footer-link {
             position: absolute;
             bottom: 50px;
@@ -232,7 +234,6 @@
             font-size: 1rem;
         }
         
-        /* 懸浮提示視窗樣式 */
         .tooltip {
             position: fixed;
             display: none;
@@ -255,19 +256,17 @@
      <a href="./indexui.html" style="position: absolute; top: 10px; left: 10px; z-index: 100; font-size: 1.2rem; color: #e0ca9d; background: rgb(1 1 1 / 50%); padding: 10px 15px; border-radius: 10px; text-decoration: none;">
     Flat Interface 
     </a>
-    <!-- 背景層 -->
     <div class="background-layer"></div>
 
-    <!-- 獨立的計算機容器 -->
     <div class="calculator-wrapper">
-        <!-- 左側計算機面板 -->
         <div class="calculator-panel">
             <div class="display-area">
                 <div class="previous-expression" id="previous-expression"></div>
                 <div class="current-input" id="display">0</div>
             </div>
             <div class="buttons-grid">
-                <div class="button clear">AC</div>
+                <!-- 更新：為 AC 按鈕加上 ID -->
+                <div class="button clear" id="ac-button">AC</div>
                 <div class="button" onclick="toggleSign()">+/-</div>
                 <div class="button" onclick="inputPercent()">%</div>
                 <div class="button operator" onclick="handleOperator('/')">÷</div>
@@ -289,25 +288,24 @@
             </div>
         </div>
 
-        <!-- 右側進階面板 -->
         <div class="advanced-panel">
             <div class="history-log">
                 <div class="history-log-title">數值紀錄</div>
                 <div id="history-content"></div>
             </div>
             <div class="modifier-group">
-                <div class="toggle-button random off" id="random-toggle" onclick="toggleModifier('random')">🎲隨機關閉</div>
+                <div class="toggle-button random off" id="random-toggle" onclick="toggleModifier('random')">🎰隨機關閉</div>
                 <input type="number" id="random-min" class="percent-input" value="0">
-                <span class="tilde">~</span>
+                <span class="dice-separator">~</span>
                 <input type="number" id="random-max" class="percent-input" value="200">
                 <label>%隨機傷害</label>
             </div>
             <div class="modifier-group">
-                <div class="toggle-button additional off" id="additional-toggle" onclick="toggleModifier('additional')">🔥追加關閉</div>
-                <input type="number" id="additional-min" class="percent-input" value="30">
-                <span class="tilde">~</span>
-                <input type="number" id="additional-max" class="percent-input" value="45">
-                <label>%追加傷害</label>
+                <div class="toggle-button dice off" id="dice-toggle" onclick="toggleModifier('dice')">🎲擲骰關閉</div>
+                <input type="number" id="dice-count" class="percent-input" value="1" title="骰子數量">
+                <span class="dice-separator">D</span>
+                <input type="number" id="dice-faces" class="percent-input" value="100" title="骰子面數">
+                <label>%擲骰傷害</label>
             </div>
             <div class="modifier-group">
                 <div class="toggle-button crit off" id="crit-toggle" onclick="toggleModifier('crit')">💥爆擊開啟</div>
@@ -318,16 +316,16 @@
             </div>
         </div>
 
-        <!-- 製作連結 -->
         <a href="https://portaly.cc/tangledkai_2.0" target="_blank" rel="noopener noreferrer" class="footer-link">
             tangledkai_2.0 製作
         </a>
     </div>
     
-    <!-- 懸浮提示視窗 -->
+    <!-- 更新：新增 AC 的懸浮提示 -->
     <div id="tooltip-random" class="tooltip">隨機傷害 = 基礎值 × (隨機%區間)</div>
-    <div id="tooltip-additional" class="tooltip">追加傷害 = 基礎值 × (追加%區間)</div>
-    <div id="tooltip-crit" class="tooltip">最終傷害 = 加成後數值 × 爆擊傷害%</div>
+    <div id="tooltip-dice" class="tooltip">擲骰傷害 = 基礎值 × (總擲骰點數 / 100)</div>
+    <div id="tooltip-crit" class="tooltip">最終傷害 = (隨機傷害 + 擲骰傷害) × 爆擊傷害%</div>
+    <div id="tooltip-ac" class="tooltip">長按AC可以清除數值紀錄</div>
  
     <script>
         const display = document.getElementById('display');
@@ -341,7 +339,7 @@
         let lastOperation = { operator: null, operand: null };
         let history = [];
         let isRandomEnabled = false;
-        let isAdditionalEnabled = false;
+        let isDiceEnabled = false;
         let isCritEnabled = false;
 
         const soundMap = {
@@ -465,33 +463,37 @@
         function performCalculation(operand1, op, operand2) {
             let baseB = operand2;
             let randomPart = 0;
-            let additionalPart = 0;
+            let dicePart = 0;
             let log = `${Math.round(operand1)} ${getDisplayOperator(op)} `;
+            let operand2Log = `${baseB.toFixed(1)}`;
 
             if (isRandomEnabled) {
                 const min = parseFloat(document.getElementById('random-min').value) / 100;
                 const max = parseFloat(document.getElementById('random-max').value) / 100;
                 const randomPercent = Math.random() * (max - min) + min;
                 randomPart = baseB * randomPercent;
+                operand2Log += ` (🎰:${randomPart.toFixed(1)})`;
             }
 
-            if (isAdditionalEnabled) {
-                const min = parseFloat(document.getElementById('additional-min').value) / 100;
-                const max = parseFloat(document.getElementById('additional-max').value) / 100;
-                const additionalPercent = Math.random() * (max - min) + min;
-                additionalPart = baseB * additionalPercent;
+            if (isDiceEnabled) {
+                const diceCount = parseInt(document.getElementById('dice-count').value, 10) || 1;
+                const diceFaces = parseInt(document.getElementById('dice-faces').value, 10) || 6;
+                let diceTotal = 0;
+                let diceRolls = [];
+                for (let i = 0; i < diceCount; i++) {
+                    const roll = Math.floor(Math.random() * diceFaces) + 1;
+                    diceRolls.push(roll);
+                    diceTotal += roll;
+                }
+                dicePart = baseB * (diceTotal / 100); 
+                operand2Log += ` (🎲:${diceRolls.join(',')}=${diceTotal} -> ${dicePart.toFixed(1)})`;
             }
             
-            let finalOperandB = baseB;
-            let operand2Log = "";
-
-            if (isRandomEnabled || isAdditionalEnabled) {
-                finalOperandB = randomPart + additionalPart;
-                operand2Log += `${baseB.toFixed(1)}`;
-                if (isRandomEnabled) operand2Log += ` (🎲:${randomPart.toFixed(1)})`;
-                if (isAdditionalEnabled) operand2Log += ` (🔥:${additionalPart.toFixed(1)})`;
+            let finalOperandB;
+            if (isRandomEnabled || isDiceEnabled) {
+                finalOperandB = randomPart + dicePart;
             } else {
-                operand2Log += `${baseB.toFixed(1)}`;
+                finalOperandB = baseB;
             }
             
             let isCriticalHit = false;
@@ -560,7 +562,7 @@
             let isCurrentlyOn;
             
             if (type === 'random') isCurrentlyOn = isRandomEnabled;
-            else if (type === 'additional') isCurrentlyOn = isAdditionalEnabled;
+            else if (type === 'dice') isCurrentlyOn = isDiceEnabled;
             else if (type === 'crit') isCurrentlyOn = isCritEnabled;
 
             const newStatus = !isCurrentlyOn;
@@ -568,10 +570,10 @@
 
             if (type === 'random') {
                 isRandomEnabled = newStatus;
-                toggleButton.textContent = newStatus ? '🎲隨機開啟' : '🎲隨機關閉';
-            } else if (type === 'additional') {
-                isAdditionalEnabled = newStatus;
-                toggleButton.textContent = newStatus ? '🔥追加開啟' : '🔥追加關閉';
+                toggleButton.textContent = newStatus ? '🎰隨機開啟' : '🎰隨機關閉';
+            } else if (type === 'dice') {
+                isDiceEnabled = newStatus;
+                toggleButton.textContent = newStatus ? '🎲擲骰開啟' : '🎲擲骰關閉';
             } else if (type === 'crit') {
                 isCritEnabled = newStatus;
                 toggleButton.textContent = newStatus ? '💥爆擊開啟' : '💥爆擊關閉';
@@ -626,10 +628,12 @@
             acButton.addEventListener('mouseleave', cancelPress);
         }
         
+        // 更新：tooltip 邏輯
         const tooltipsConfig = {
             'random-toggle': document.getElementById('tooltip-random'),
-            'additional-toggle': document.getElementById('tooltip-additional'),
-            'crit-toggle': document.getElementById('tooltip-crit') 
+            'dice-toggle': document.getElementById('tooltip-dice'),
+            'crit-toggle': document.getElementById('tooltip-crit'),
+            'ac-button': document.getElementById('tooltip-ac') // 新增 AC 按鈕
         };
         
         let tooltipTimer = null;
